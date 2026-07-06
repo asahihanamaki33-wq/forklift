@@ -116,9 +116,7 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
     <div class="form-row">
       <div class="fg"><label>検査年月日</label><input type="date" id="inspDate" /></div>
       <div class="fg"><label>車両番号</label>
-        <select id="inspVehicle" onchange="onVehicleChange()">
-          <option value="">-- 選択してください --</option>
-        </select>
+        <select id="inspVehicle" onchange="onVehicleChange()"><option value="">-- 選択してください --</option></select>
       </div>
     </div>
     <div class="form-row">
@@ -142,14 +140,12 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
       <div class="notice">「良」または「不良」をタップして判定してください。</div>
       <div class="tbl-wrap">
         <table class="itbl">
-          <thead>
-            <tr>
-              <th style="width:36px">区分</th><th style="width:30px">No.</th>
-              <th style="min-width:110px">検査箇所</th><th>検査内容</th>
-              <th style="min-width:110px">検査方法</th><th style="width:108px">検査結果</th>
-              <th style="min-width:120px">補修内容</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th style="width:36px">区分</th><th style="width:30px">No.</th>
+            <th style="min-width:110px">検査箇所</th><th>検査内容</th>
+            <th style="min-width:110px">検査方法</th><th style="width:108px">検査結果</th>
+            <th style="min-width:120px">補修内容</th>
+          </tr></thead>
           <tbody id="inspBody"></tbody>
         </table>
       </div>
@@ -273,75 +269,74 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
 
 <script>
 const BATTERY_ITEMS = [
-  { ku:'電動機\n制御等', no:1,  place:'モーター',                                                           content:'回転状態、異音、異臭',                                                   method:'目視・聴診・嗅診' },
-  { ku:'電動機\n制御等', no:2,  place:'コントローラー',                                                      content:'機能、エラー表示の有無',                                                 method:'操作・目視' },
-  { ku:'電動機\n制御等', no:3,  place:'コンタクター',                                                        content:'接点の損傷・摩耗、端子の締め',                                           method:'目視・レンチ等' },
-  { ku:'電動機\n制御等', no:4,  place:'ヒューズ・配線',                                                      content:'ヒューズ・各端子の締め',                                                 method:'目視・レンチ等' },
-  { ku:'電動機\n制御等', no:5,  place:'充電装置',                                                           content:'タイマーの作動、コード・コンセントの損傷',                                method:'目視・操作' },
-  { ku:'電動機\n制御等', no:6,  place:'バッテリー',                                                         content:'液量、コード・コネクターの損傷',                                          method:'目視・触診' },
-  { ku:'動力',           no:8,  place:'ドライブユニット、デファレンシャル',                                    content:'異音、油漏れ',                                                          method:'目視・聴診' },
-  { ku:'走行装置',        no:10, place:'ホイール（タイヤ）',                                                  content:'空気圧、亀裂、磨耗、ボルト・ナットの締め、ベアリングのがた・異音',        method:'目視・タイヤゲージ・レンチ等・触診・聴診' },
-  { ku:'走行装置',        no:11, place:'サスペンション',                                                     content:'亀裂、損傷、ボルトの締め',                                               method:'目視・レンチ等' },
-  { ku:'操縦装置',        no:13, place:'ハンドル',                                                          content:'操作具合、がた',                                                        method:'目視・操作・触診' },
-  { ku:'操縦装置',        no:14, place:'ナックル',                                                          content:'キングピンのがた',                                                      method:'触診' },
-  { ku:'操縦装置',        no:15, place:'パワーステアリング',                                                  content:'油漏れ、ホース・パイプの損傷',                                           method:'目視・触診' },
-  { ku:'操縦装置',        no:16, place:'ステアリング用チェーン',                                               content:'張り具合',                                                             method:'目視・触診' },
-  { ku:'制動装置',        no:18, place:'走行ブレーキ',                                                       content:'ペダルの遊び・床板との隙間、効き具合、ブレーキの開放状態【デットマン式】', method:'目視・操作' },
-  { ku:'制動装置',        no:19, place:'駐車ブレーキ',                                                       content:'引きしろ、引き力、踏みか、効き具合',                                     method:'目視・操作' },
-  { ku:'制動装置',        no:20, place:'オイルブレーキ（含配管）',                                            content:'作動、油量、油漏れ',                                                    method:'操作・目視' },
-  { ku:'荷役装置',        no:22, place:'フォーク',                                                          content:'亀裂、摩耗、止めピン部の摩耗',                                          method:'目視・触診' },
-  { ku:'荷役装置',        no:23, place:'マスト、ストラドルアーム、リフトブラケット',                            content:'亀裂、がた',                                                           method:'目視・操作・聴診' },
-  { ku:'荷役装置',        no:24, place:'リフトチェーン',                                                     content:'張り具合',                                                             method:'目視・触診' },
-  { ku:'荷役装置',        no:25, place:'アタッチメント装置',                                                  content:'取付け状態、作動、異音',                                                method:'目視・操作・聴診' },
-  { ku:'油圧装置',        no:27, place:'作動油タンク',                                                       content:'油量・汚れ、油漏れ',                                                    method:'目視' },
-  { ku:'油圧装置',        no:28, place:'配管（ホース、パイプ）',                                              content:'損傷、油漏れ、取付け状態',                                              method:'目視・触診' },
-  { ku:'油圧装置',        no:29, place:'油圧ポンプ（含駆動装置）',                                            content:'油漏れ、異音',                                                          method:'目視・操作・聴診' },
-  { ku:'油圧装置',        no:30, place:'油圧シリンダー（リフト、ティルト、リーチ、アタッチメント）',              content:'作動、油漏れ、ピンの摩耗、ボルトの締め',                                method:'目視・操作・レンチ等' },
-  { ku:'油圧装置',        no:31, place:'方向制御弁（コントロール弁）',                                         content:'レバーのがた、油漏れ',                                                  method:'目視・触診' },
-  { ku:'安全装置\n車体等', no:33, place:'ヘッドガード、バックレスト',                                         content:'ボルトの締め、亀裂、変形',                                              method:'目視・レンチ等' },
-  { ku:'安全装置\n車体等', no:34, place:'灯火類、方向指示器、計器類',                                         content:'作動、破損、水込入',                                                    method:'操作' },
-  { ku:'安全装置\n車体等', no:35, place:'警音器、後写鏡、反射鏡',                                            content:'音量、損傷、写影',                                                      method:'聴診' },
-  { ku:'安全装置\n車体等', no:36, place:'給油脂',                                                           content:'各部の給油脂状態',                                                      method:'目視・操作' },
-  { ku:'安全装置\n車体等', no:37, place:'離席時安全装置（走行・荷役）',                                       content:'作動',                                                                 method:'目視・操作' },
-  { ku:'総合',            no:39, place:'総合テスト（走行、荷役）',                                            content:'機能、異音、異常振動、異常発熱',                                        method:'操作・目視・聴診・触診' },
+  { ku:'電動機\n制御等', no:1,  place:'モーター',                              content:'回転状態、異音、異臭',                                                   method:'目視・聴診・嗅診' },
+  { ku:'電動機\n制御等', no:2,  place:'コントローラー',                         content:'機能、エラー表示の有無',                                                 method:'操作・目視' },
+  { ku:'電動機\n制御等', no:3,  place:'コンタクター',                           content:'接点の損傷・摩耗、端子の締め',                                           method:'目視・レンチ等' },
+  { ku:'電動機\n制御等', no:4,  place:'ヒューズ・配線',                         content:'ヒューズ・各端子の締め',                                                 method:'目視・レンチ等' },
+  { ku:'電動機\n制御等', no:5,  place:'充電装置',                              content:'タイマーの作動、コード・コンセントの損傷',                                method:'目視・操作' },
+  { ku:'電動機\n制御等', no:6,  place:'バッテリー',                            content:'液量、コード・コネクターの損傷',                                          method:'目視・触診' },
+  { ku:'動力',           no:8,  place:'ドライブユニット、デファレンシャル',      content:'異音、油漏れ',                                                          method:'目視・聴診' },
+  { ku:'走行装置',        no:10, place:'ホイール（タイヤ）',                     content:'空気圧、亀裂、磨耗、ボルト・ナットの締め、ベアリングのがた・異音',        method:'目視・タイヤゲージ・レンチ等・触診・聴診' },
+  { ku:'走行装置',        no:11, place:'サスペンション',                        content:'亀裂、損傷、ボルトの締め',                                               method:'目視・レンチ等' },
+  { ku:'操縦装置',        no:13, place:'ハンドル',                              content:'操作具合、がた',                                                        method:'目視・操作・触診' },
+  { ku:'操縦装置',        no:14, place:'ナックル',                              content:'キングピンのがた',                                                      method:'触診' },
+  { ku:'操縦装置',        no:15, place:'パワーステアリング',                     content:'油漏れ、ホース・パイプの損傷',                                           method:'目視・触診' },
+  { ku:'操縦装置',        no:16, place:'ステアリング用チェーン',                 content:'張り具合',                                                             method:'目視・触診' },
+  { ku:'制動装置',        no:18, place:'走行ブレーキ',                          content:'ペダルの遊び・床板との隙間、効き具合、ブレーキの開放状態【デットマン式】', method:'目視・操作' },
+  { ku:'制動装置',        no:19, place:'駐車ブレーキ',                          content:'引きしろ、引き力、踏みか、効き具合',                                     method:'目視・操作' },
+  { ku:'制動装置',        no:20, place:'オイルブレーキ（含配管）',               content:'作動、油量、油漏れ',                                                    method:'操作・目視' },
+  { ku:'荷役装置',        no:22, place:'フォーク',                              content:'亀裂、摩耗、止めピン部の摩耗',                                          method:'目視・触診' },
+  { ku:'荷役装置',        no:23, place:'マスト、ストラドルアーム、リフトブラケット', content:'亀裂、がた',                                                       method:'目視・操作・聴診' },
+  { ku:'荷役装置',        no:24, place:'リフトチェーン',                        content:'張り具合',                                                             method:'目視・触診' },
+  { ku:'荷役装置',        no:25, place:'アタッチメント装置',                     content:'取付け状態、作動、異音',                                                method:'目視・操作・聴診' },
+  { ku:'油圧装置',        no:27, place:'作動油タンク',                          content:'油量・汚れ、油漏れ',                                                    method:'目視' },
+  { ku:'油圧装置',        no:28, place:'配管（ホース、パイプ）',                 content:'損傷、油漏れ、取付け状態',                                              method:'目視・触診' },
+  { ku:'油圧装置',        no:29, place:'油圧ポンプ（含駆動装置）',              content:'油漏れ、異音',                                                          method:'目視・操作・聴診' },
+  { ku:'油圧装置',        no:30, place:'油圧シリンダー（リフト、ティルト、リーチ、アタッチメント）', content:'作動、油漏れ、ピンの摩耗、ボルトの締め', method:'目視・操作・レンチ等' },
+  { ku:'油圧装置',        no:31, place:'方向制御弁（コントロール弁）',            content:'レバーのがた、油漏れ',                                                  method:'目視・触診' },
+  { ku:'安全装置\n車体等', no:33, place:'ヘッドガード、バックレスト',            content:'ボルトの締め、亀裂、変形',                                              method:'目視・レンチ等' },
+  { ku:'安全装置\n車体等', no:34, place:'灯火類、方向指示器、計器類',            content:'作動、破損、水込入',                                                    method:'操作' },
+  { ku:'安全装置\n車体等', no:35, place:'警音器、後写鏡、反射鏡',               content:'音量、損傷、写影',                                                      method:'聴診' },
+  { ku:'安全装置\n車体等', no:36, place:'給油脂',                               content:'各部の給油脂状態',                                                      method:'目視・操作' },
+  { ku:'安全装置\n車体等', no:37, place:'離席時安全装置（走行・荷役）',          content:'作動',                                                                 method:'目視・操作' },
+  { ku:'総合',            no:39, place:'総合テスト（走行、荷役）',               content:'機能、異音、異常振動、異常発熱',                                        method:'操作・目視・聴診・触診' },
 ];
-
 const ENGINE_ITEMS = [
-  { ku:'エンジン',         no:1,  place:'本体',                                           content:'かかり具合、異音、回転の状態、排気の状態',                               method:'目視・聴診・触診' },
-  { ku:'エンジン',         no:2,  place:'エアクリーナー',                                  content:'エレメントの汚れ',                                                     method:'目視' },
-  { ku:'エンジン',         no:3,  place:'潤滑装置',                                       content:'油量・汚れ、油漏れ',                                                   method:'目視' },
-  { ku:'エンジン',         no:4,  place:'燃料装置',                                       content:'燃料漏れ、高圧ガス漏れ',                                               method:'目視' },
-  { ku:'エンジン',         no:5,  place:'冷却装置',                                       content:'水量、水漏れ、ホースの損傷、ファンベルトの締め',                         method:'目視・触診' },
-  { ku:'エンジン',         no:6,  place:'バッテリー',                                     content:'液量、端子の締め',                                                     method:'目視・レンチ等' },
-  { ku:'動力\n伝達装置',   no:8,  place:'クラッチ',                                       content:'異音、切れ、ペダルの遊び・隙間',                                        method:'聴診・操作・目視' },
+  { ku:'エンジン',         no:1,  place:'本体',                                content:'かかり具合、異音、回転の状態、排気の状態',                               method:'目視・聴診・触診' },
+  { ku:'エンジン',         no:2,  place:'エアクリーナー',                       content:'エレメントの汚れ',                                                     method:'目視' },
+  { ku:'エンジン',         no:3,  place:'潤滑装置',                            content:'油量・汚れ、油漏れ',                                                   method:'目視' },
+  { ku:'エンジン',         no:4,  place:'燃料装置',                            content:'燃料漏れ、高圧ガス漏れ',                                               method:'目視' },
+  { ku:'エンジン',         no:5,  place:'冷却装置',                            content:'水量、水漏れ、ホースの損傷、ファンベルトの締め',                         method:'目視・触診' },
+  { ku:'エンジン',         no:6,  place:'バッテリー',                          content:'液量、端子の締め',                                                     method:'目視・レンチ等' },
+  { ku:'動力\n伝達装置',   no:8,  place:'クラッチ',                            content:'異音、切れ、ペダルの遊び・隙間',                                        method:'聴診・操作・目視' },
   { ku:'動力\n伝達装置',   no:9,  place:'トランスミッション、トルクコンバーター、デファレンシャル', content:'レバーの抜け、作動、異音、油量（トルコン）、油漏れ', method:'目視・操作・聴診' },
-  { ku:'走行装置',         no:11, place:'ホイール（タイヤ）',                              content:'空気圧、亀裂、磨耗、ボルト・ナットの締め、ベアリングのがた・異音',        method:'目視・タイヤゲージ・レンチ等・触診・聴診' },
-  { ku:'操縦装置',         no:13, place:'ハンドル',                                       content:'操作具合、がた',                                                       method:'目視・操作・触診' },
-  { ku:'操縦装置',         no:14, place:'ナックル',                                       content:'キングピンのがた',                                                     method:'触診' },
-  { ku:'操縦装置',         no:15, place:'パワーステアリング',                             content:'油漏れ、ホース・パイプの損傷',                                          method:'目視・触診' },
-  { ku:'制動装置',         no:17, place:'走行ブレーキ',                                   content:'ペダルの遊び・床板との隙間、効き具合',                                  method:'目視・操作' },
-  { ku:'制動装置',         no:18, place:'駐車ブレーキ',                                   content:'引きしろ、引き力、踏みか、効き具合',                                    method:'目視・操作' },
-  { ku:'制動装置',         no:19, place:'オイルブレーキ（含配管）',                       content:'作動、油量、油漏れ',                                                   method:'操作・目視' },
-  { ku:'荷役装置',         no:21, place:'フォーク',                                       content:'亀裂、摩耗、止めピン部の摩耗',                                         method:'目視・触診' },
-  { ku:'荷役装置',         no:22, place:'マスト、リフトブラケット',                       content:'亀裂、がた',                                                          method:'目視・操作・聴診' },
-  { ku:'荷役装置',         no:23, place:'リフトチェーン',                                 content:'張り具合',                                                            method:'目視・触診' },
-  { ku:'荷役装置',         no:24, place:'アタッチメント装置',                             content:'取付け状態、作動、異音',                                               method:'目視・操作・聴診' },
-  { ku:'油圧装置',         no:26, place:'作動油タンク',                                   content:'油量・汚れ、油漏れ',                                                   method:'目視' },
-  { ku:'油圧装置',         no:27, place:'配管（ホース、パイプ）',                         content:'損傷、油漏れ、取付け状態',                                             method:'目視・触診' },
-  { ku:'油圧装置',         no:28, place:'油圧ポンプ（含駆動装置）',                       content:'油漏れ、異音',                                                         method:'目視・操作・聴診' },
+  { ku:'走行装置',         no:11, place:'ホイール（タイヤ）',                   content:'空気圧、亀裂、磨耗、ボルト・ナットの締め、ベアリングのがた・異音',        method:'目視・タイヤゲージ・レンチ等・触診・聴診' },
+  { ku:'操縦装置',         no:13, place:'ハンドル',                            content:'操作具合、がた',                                                       method:'目視・操作・触診' },
+  { ku:'操縦装置',         no:14, place:'ナックル',                            content:'キングピンのがた',                                                     method:'触診' },
+  { ku:'操縦装置',         no:15, place:'パワーステアリング',                   content:'油漏れ、ホース・パイプの損傷',                                          method:'目視・触診' },
+  { ku:'制動装置',         no:17, place:'走行ブレーキ',                        content:'ペダルの遊び・床板との隙間、効き具合',                                  method:'目視・操作' },
+  { ku:'制動装置',         no:18, place:'駐車ブレーキ',                        content:'引きしろ、引き力、踏みか、効き具合',                                    method:'目視・操作' },
+  { ku:'制動装置',         no:19, place:'オイルブレーキ（含配管）',             content:'作動、油量、油漏れ',                                                   method:'操作・目視' },
+  { ku:'荷役装置',         no:21, place:'フォーク',                            content:'亀裂、摩耗、止めピン部の摩耗',                                         method:'目視・触診' },
+  { ku:'荷役装置',         no:22, place:'マスト、リフトブラケット',             content:'亀裂、がた',                                                          method:'目視・操作・聴診' },
+  { ku:'荷役装置',         no:23, place:'リフトチェーン',                       content:'張り具合',                                                            method:'目視・触診' },
+  { ku:'荷役装置',         no:24, place:'アタッチメント装置',                   content:'取付け状態、作動、異音',                                               method:'目視・操作・聴診' },
+  { ku:'油圧装置',         no:26, place:'作動油タンク',                        content:'油量・汚れ、油漏れ',                                                   method:'目視' },
+  { ku:'油圧装置',         no:27, place:'配管（ホース、パイプ）',               content:'損傷、油漏れ、取付け状態',                                             method:'目視・触診' },
+  { ku:'油圧装置',         no:28, place:'油圧ポンプ（含駆動装置）',             content:'油漏れ、異音',                                                         method:'目視・操作・聴診' },
   { ku:'油圧装置',         no:29, place:'油圧シリンダー（リフト、ティルト、アタッチメント）', content:'作動、油漏れ、ピンの摩耗、ボルトの締め', method:'目視・操作・レンチ等' },
-  { ku:'油圧装置',         no:30, place:'方向制御弁（コントロール弁）',                   content:'レバーのがた、油漏れ',                                                 method:'目視・操作' },
-  { ku:'安全装置\n車体等', no:32, place:'ヘッドガード、バックレスト',                    content:'亀裂、変形、取付',                                                     method:'目視・レンチ等' },
-  { ku:'安全装置\n車体等', no:33, place:'灯火類、方向指示器、計器類',                    content:'作動、破損、水込入',                                                   method:'目視・操作' },
-  { ku:'安全装置\n車体等', no:34, place:'警音器、後写鏡、反射鏡',                        content:'音量、損傷、写影',                                                     method:'聴診' },
-  { ku:'安全装置\n車体等', no:35, place:'給油脂',                                         content:'各部の給油脂状態',                                                     method:'目視・操作' },
-  { ku:'安全装置\n車体等', no:36, place:'離席時安全装置（走行・荷役）',                  content:'作動',                                                                method:'操作' },
-  { ku:'総合',             no:38, place:'総合テスト（走行、荷役）',                       content:'機能、異音、異常振動、異常発熱',                                       method:'操作・目視・聴診・触診' },
+  { ku:'油圧装置',         no:30, place:'方向制御弁（コントロール弁）',          content:'レバーのがた、油漏れ',                                                 method:'目視・操作' },
+  { ku:'安全装置\n車体等', no:32, place:'ヘッドガード、バックレスト',           content:'亀裂、変形、取付',                                                     method:'目視・レンチ等' },
+  { ku:'安全装置\n車体等', no:33, place:'灯火類、方向指示器、計器類',           content:'作動、破損、水込入',                                                   method:'目視・操作' },
+  { ku:'安全装置\n車体等', no:34, place:'警音器、後写鏡、反射鏡',              content:'音量、損傷、写影',                                                     method:'聴診' },
+  { ku:'安全装置\n車体等', no:35, place:'給油脂',                              content:'各部の給油脂状態',                                                     method:'目視・操作' },
+  { ku:'安全装置\n車体等', no:36, place:'離席時安全装置（走行・荷役）',         content:'作動',                                                                method:'操作' },
+  { ku:'総合',             no:38, place:'総合テスト（走行、荷役）',             content:'機能、異音、異常振動、異常発熱',                                       method:'操作・目視・聴診・触診' },
 ];
 
-const STORAGE_KEY   = 'forklift_insp_v2';
-const VEHICLE_KEY   = 'forklift_veh_v2';
-const GAS_URL_KEY   = 'forklift_gas_url';
+const STORAGE_KEY = 'forklift_insp_v2';
+const VEHICLE_KEY = 'forklift_veh_v2';
+const GAS_URL_KEY = 'forklift_gas_url';
 const THREE_YEARS_MS = 3 * 365 * 24 * 60 * 60 * 1000;
 
 function getData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
@@ -491,7 +486,7 @@ async function saveInspection() {
       if (idx>=0) { all[idx].synced=true; saveData(all); }
       alert(`✅ 保存＆スプレッドシート送信完了！\n${date} / ${vehicle}\n不良項目: ${ngCount}件`);
     } else {
-      alert(`💾 ローカル保存しました（スプレッドシート送信失敗）\n履歴タブから再送できます。`);
+      alert(`💾 ローカル保存しました（スプレッドシート送信失敗）\n履歴タブの「未送信を再送」で再試行できます。`);
     }
   } else {
     alert(`💾 保存しました！\n${date} / ${vehicle}\n不良項目: ${ngCount}件`);
@@ -499,18 +494,20 @@ async function saveInspection() {
   btn.disabled = false; btn.textContent = '💾 保存する';
 }
 
-// ===== GAS送信（CORS対策：Content-Typeヘッダーなし）=====
+// ===== GAS送信 =====
+// mode:'no-cors' を使用することでCORSプリフライトとリダイレクト問題を回避
+// レスポンスはopaque（読めない）なので、fetch が例外なく完了したら成功とみなす
 async function syncRecord(record) {
   const gasUrl = getGasUrl();
   if (!gasUrl) return false;
   try {
-    const res = await fetch(gasUrl, {
+    await fetch(gasUrl, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify(buildPayload(record))
-      // Content-Typeを指定しない → プリフライトが発生せずCORSエラーを回避
     });
-    const json = await res.json();
-    return json.status === 'ok';
+    // no-corsではレスポンスを読めないが、例外が出なければGASに届いている
+    return true;
   } catch(e) {
     console.error('GAS sync error:', e);
     return false;
@@ -717,26 +714,22 @@ function saveGasUrl() {
   alert(url ? 'URLを保存しました。' : 'URLをクリアしました。');
 }
 
-// 接続テスト（CORS対策：Content-Typeヘッダーなし）
+// 接続テスト：no-corsで送信し、例外なく完了したら成功
 async function testGasConnection() {
   const url=document.getElementById('gasUrl').value.trim();
   if (!url) { alert('URLを入力してください。'); return; }
   const el=document.getElementById('gasTestResult');
   el.innerHTML='<div class="sync-status sync-ing">🔌 接続テスト中...</div>';
   try {
-    const res = await fetch(url, {
+    await fetch(url, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({ _test: true })
-      // Content-Typeを指定しない → CORSプリフライトを回避
     });
-    const json = await res.json();
-    if (json.status==='ok') {
-      el.innerHTML='<div class="sync-status sync-ok">✅ 接続成功！スプレッドシートと連携できています。</div>';
-    } else {
-      el.innerHTML=`<div class="sync-status sync-ng">❌ GASからエラー: ${JSON.stringify(json)}</div>`;
-    }
+    // no-corsではレスポンスを読めないが、例外なく完了 = 通信成功
+    el.innerHTML='<div class="sync-status sync-ok">✅ 接続成功！スプレッドシートにテスト送信しました。<br>スプレッドシートに「_test: true」の行が追加されていれば完璧です。</div>';
   } catch(e) {
-    el.innerHTML=`<div class="sync-status sync-ng">❌ 接続失敗: ${e.message}<br>GASのデプロイ設定「アクセスできるユーザー：全員」を確認してください。</div>`;
+    el.innerHTML=`<div class="sync-status sync-ng">❌ 接続失敗（ネットワークエラー）: ${e.message}<br>URLを確認してください。</div>`;
   }
 }
 
@@ -745,7 +738,6 @@ function resetAllData() {
   localStorage.removeItem(STORAGE_KEY); alert('削除しました。');
   updateStorageInfo(); renderSettings();
 }
-
 function exportCSV() {
   const data=getData(); if (!data.length) { alert('エクスポートするデータがありません'); return; }
   const headers=['検査年月日','車両','種別','検査者','稼働時間h','走行距離km','不良件数','送信済','保存日時'];
@@ -755,7 +747,6 @@ function exportCSV() {
   const url=URL.createObjectURL(blob), a=document.createElement('a');
   a.href=url; a.download=`forklift_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
 }
-
 function clearForm() {
   if (!confirm('入力内容をリセットしますか？')) return;
   ['inspName','inspHour','inspKm','inspMgmtNo','inspRemarks'].forEach(id=>document.getElementById(id).value='');
@@ -768,7 +759,6 @@ function clearForm() {
 function updateStorageInfo() {
   document.getElementById('storageInfo').textContent=`${getData().length}件保存 ／ 3年保存`;
 }
-
 (function init() {
   const now=new Date();
   document.getElementById('inspDate').value=now.toISOString().slice(0,10);
