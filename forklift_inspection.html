@@ -64,6 +64,7 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
 
 .float-save { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); right: 20px; background: #38a169; color: white; border: none; border-radius: 50px; padding: 14px 24px; font-size: 16px; font-weight: bold; font-family: inherit; box-shadow: 0 4px 14px rgba(56,161,105,0.5); cursor: pointer; z-index: 50; min-height: 54px; user-select: none; }
 .float-save:active { transform: scale(0.95); }
+.float-save:disabled { background: #a0aec0; box-shadow: none; }
 
 .hist-item { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; cursor: pointer; }
 .hist-item:active { background: #f0f7ff; }
@@ -74,6 +75,8 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
 .badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: bold; }
 .badge-ok { background: #c6f6d5; color: #276749; }
 .badge-ng { background: #fed7d7; color: #c53030; }
+.badge-synced { background: #bee3f8; color: #2c5282; }
+.badge-unsynced { background: #fefcbf; color: #744210; }
 
 .vlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .vcard { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 14px; position: relative; }
@@ -94,7 +97,14 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
 
 .empty { text-align: center; color: #a0aec0; padding: 40px 0; font-size: 14px; }
 .notice { background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #2c5282; margin-bottom: 12px; line-height: 1.5; }
+.notice-warn { background: #fffbeb; border: 1px solid #f6e05e; border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #744210; margin-bottom: 12px; line-height: 1.5; }
+.notice-ok { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #276749; margin-bottom: 12px; line-height: 1.5; }
 .tag { display: inline-block; background: #e2e8f0; padding: 3px 8px; border-radius: 10px; font-size: 11px; }
+
+.sync-status { font-size: 13px; padding: 8px 14px; border-radius: 7px; margin-top: 10px; }
+.sync-ok { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+.sync-ng { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+.sync-ing { background: #ebf8ff; color: #2c5282; border: 1px solid #bee3f8; }
 
 @media print {
   header,.tab-bar,.btn,.btn-group,.vdel,.modal-overlay,.float-save { display: none !important; }
@@ -116,8 +126,10 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
   <button onclick="showTab('history')">📁 検査履歴</button>
   <button onclick="showTab('vehicles')">🚜 車両管理</button>
   <button onclick="showTab('stats')">📊 統計</button>
+  <button onclick="showTab('settings')">⚙️ 設定</button>
 </div>
 
+<!-- 検査記入タブ -->
 <div id="tab-inspect" class="container">
   <div class="card">
     <div class="card-title">基本情報</div>
@@ -200,6 +212,7 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
   </div>
 </div>
 
+<!-- 検査履歴タブ -->
 <div id="tab-history" class="container" style="display:none">
   <div class="card">
     <div class="card-title">絞り込み</div>
@@ -210,11 +223,15 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
       <div class="fg"><label>開始年月</label><input type="month" id="filterFrom" onchange="renderHistory()" /></div>
       <div class="fg"><label>終了年月</label><input type="month" id="filterTo" onchange="renderHistory()" /></div>
     </div>
-    <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSVエクスポート</button>
+    <div class="btn-group">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSVエクスポート</button>
+      <button class="btn btn-outline btn-sm" onclick="retrySyncAll()">🔄 未送信を再送</button>
+    </div>
   </div>
   <div id="historyList"></div>
 </div>
 
+<!-- 車両管理タブ -->
 <div id="tab-vehicles" class="container" style="display:none">
   <div class="card">
     <div class="card-title">車両を追加（最大5台）</div>
@@ -241,6 +258,7 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
   </div>
 </div>
 
+<!-- 統計タブ -->
 <div id="tab-stats" class="container" style="display:none">
   <div class="stat-grid" id="statsGrid"></div>
   <div class="card">
@@ -253,8 +271,54 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
   </div>
 </div>
 
+<!-- 設定タブ -->
+<div id="tab-settings" class="container" style="display:none">
+  <div class="card">
+    <div class="card-title">🔗 Googleスプレッドシート連携</div>
+    <div class="notice">
+      Google Apps ScriptのウェブアプリURLを設定すると、保存時に自動でスプレッドシートにもデータが送信されます。
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>GASウェブアプリURL</label>
+      <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec" style="font-size:13px" />
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveGasUrl()">💾 URLを保存</button>
+      <button class="btn btn-outline" onclick="testGasConnection()">🔌 接続テスト</button>
+    </div>
+    <div id="gasTestResult" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 設定手順</div>
+    <div style="font-size:13px;line-height:2;color:#4a5568">
+      <b>Step 1.</b> Googleスプレッドシートを新規作成<br>
+      <b>Step 2.</b> メニュー「拡張機能」→「Apps Script」を開く<br>
+      <b>Step 3.</b> 配布されたコード（gas_code.gs）を貼り付けて保存<br>
+      <b>Step 4.</b> 「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」<br>
+      <b>Step 5.</b> アクセス権を「全員」に設定して「デプロイ」<br>
+      <b>Step 6.</b> 表示されたURLをここに貼り付けて「URLを保存」<br>
+      <b>Step 7.</b> 「接続テスト」で✅が出れば完了
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 同期状況</div>
+    <div id="syncSummary"></div>
+    <br>
+    <button class="btn btn-outline btn-sm" onclick="retrySyncAll()">🔄 未送信をすべて再送</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗄 ローカルデータ管理</div>
+    <p style="font-size:13px;color:#718096;margin-bottom:12px">3年以上前のデータは保存時に自動削除されます。手動でリセットする場合は以下を使用してください。</p>
+    <button class="btn btn-danger btn-sm" onclick="resetAllData()">⚠️ すべてのデータを削除</button>
+  </div>
+</div>
+
 <button class="float-save" id="floatSave" onclick="saveInspection()" style="display:none">💾 保存する</button>
 
+<!-- 詳細モーダル -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-title">
@@ -265,12 +329,14 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
     <br>
     <div class="btn-group">
       <button class="btn btn-outline" onclick="window.print()">🖨 印刷</button>
+      <button class="btn btn-outline btn-sm" id="modalResyncBtn">🔄 スプレッドシートに送信</button>
       <button class="btn btn-danger" id="modalDeleteBtn">🗑 削除</button>
     </div>
   </div>
 </div>
 
 <script>
+// ===== 検査項目定義 =====
 const BATTERY_ITEMS = [
   { ku:'電動機\n制御等', no:1,  place:'モーター',                                        content:'回転状態、異音、異臭',                                                   method:'目視・聴診・嗅診' },
   { ku:'電動機\n制御等', no:2,  place:'コントローラー',                                   content:'機能、エラー表示の有無',                                                 method:'操作・目視' },
@@ -338,10 +404,13 @@ const ENGINE_ITEMS = [
   { ku:'総合',             no:38, place:'総合テスト（走行、荷役）',                       content:'機能、異音、異常振動、異常発熱',                                       method:'操作・目視・聴診・触診' },
 ];
 
-const STORAGE_KEY = 'forklift_insp_v2';
-const VEHICLE_KEY = 'forklift_veh_v2';
+// ===== ストレージキー =====
+const STORAGE_KEY   = 'forklift_insp_v2';
+const VEHICLE_KEY   = 'forklift_veh_v2';
+const GAS_URL_KEY   = 'forklift_gas_url';
 const THREE_YEARS_MS = 3 * 365 * 24 * 60 * 60 * 1000;
 
+// ===== データ操作 =====
 function getData() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
 function saveData(d) {
   const cut = Date.now() - THREE_YEARS_MS;
@@ -349,20 +418,24 @@ function saveData(d) {
 }
 function getVehicles() { try { return JSON.parse(localStorage.getItem(VEHICLE_KEY)||'[]'); } catch { return []; } }
 function saveVehicles(v) { localStorage.setItem(VEHICLE_KEY, JSON.stringify(v)); }
+function getGasUrl() { return localStorage.getItem(GAS_URL_KEY)||''; }
 
+// ===== タブ切替 =====
 function showTab(name) {
-  ['inspect','history','vehicles','stats'].forEach(t => {
+  ['inspect','history','vehicles','stats','settings'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
   });
   document.querySelectorAll('.tab-bar button').forEach((b,i) => {
-    b.classList.toggle('active', ['inspect','history','vehicles','stats'][i] === name);
+    b.classList.toggle('active', ['inspect','history','vehicles','stats','settings'][i] === name);
   });
   document.getElementById('floatSave').style.display = (name==='inspect') ? '' : 'none';
   if (name==='history') renderHistory();
   if (name==='vehicles') renderVehicles();
   if (name==='stats') renderStats();
+  if (name==='settings') renderSettings();
 }
 
+// ===== 車両選択 =====
 function onVehicleChange() {
   const vName = document.getElementById('inspVehicle').value;
   const v = getVehicles().find(v => v.name === vName);
@@ -375,16 +448,17 @@ function onVehicleChange() {
   document.getElementById('noVehicleMsg').style.display = 'none';
   document.getElementById('inspFormArea').style.display = '';
   document.getElementById('floatSave').style.display = '';
-  if (v.maker) document.getElementById('inspMaker').value = v.maker;
-  if (v.model) document.getElementById('inspModel').value = v.model;
+  if (v.maker)  document.getElementById('inspMaker').value  = v.maker;
+  if (v.model)  document.getElementById('inspModel').value  = v.model;
   if (v.serial) document.getElementById('inspSerial').value = v.serial;
   const items = (v.type === 'バッテリー') ? BATTERY_ITEMS : ENGINE_ITEMS;
-  const label = v.type === 'バッテリー' ? 'バッテリー式（SR-LB-11-D）' : (v.type === 'LPG' ? 'LPG式（SR-LE-11-D）' : 'エンジン式（SR-LE-11-D）');
+  const label = v.type === 'バッテリー' ? 'バッテリー式（SR-LB-11-D）' : (v.type==='LPG'?'LPG式（SR-LE-11-D）':'エンジン式（SR-LE-11-D）');
   document.getElementById('inspFormTitle').textContent = `検査項目（第151条の22）― ${label}`;
   buildTable(items);
   buildRepairTable();
 }
 
+// ===== 検査表構築 =====
 function buildTable(items) {
   const tbody = document.getElementById('inspBody');
   tbody.innerHTML = '';
@@ -398,7 +472,7 @@ function buildTable(items) {
     g.rows.forEach((item, i) => {
       const tr = document.createElement('tr');
       tr.id = `row_${item.no}`;
-      const kuTd = i === 0 ? `<td class="ku-cell" rowspan="${g.rows.length}">${item.ku}</td>` : '';
+      const kuTd = i===0 ? `<td class="ku-cell" rowspan="${g.rows.length}">${item.ku}</td>` : '';
       tr.innerHTML = `${kuTd}
         <td class="no-cell">${item.no}</td>
         <td style="font-size:13px;min-width:110px">${item.place}</td>
@@ -429,7 +503,6 @@ function buildRepairTable(rows) {
   document.getElementById('repairBody').innerHTML = '';
   (rows || [{ no:'', desc:'', date:'', content:'' }]).forEach(r => addRepairRow(r));
 }
-
 function addRepairRow(data) {
   const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -442,7 +515,6 @@ function addRepairRow(data) {
     </td>`;
   document.getElementById('repairBody').appendChild(tr);
 }
-
 function getRepairRows() {
   return [...document.querySelectorAll('#repairBody tr')].map(tr => {
     const inp = tr.querySelectorAll('input');
@@ -450,47 +522,133 @@ function getRepairRows() {
   }).filter(r => r.no||r.desc||r.content);
 }
 
-function saveInspection() {
-  const date = document.getElementById('inspDate').value;
+// ===== 保存 =====
+async function saveInspection() {
+  const date    = document.getElementById('inspDate').value;
   const vehicle = document.getElementById('inspVehicle').value;
-  const name = document.getElementById('inspName').value.trim();
+  const name    = document.getElementById('inspName').value.trim();
   if (!date||!vehicle||!name) { alert('検査年月日・車両番号・検査者氏名は必須です。'); return; }
+
   const v = getVehicles().find(v => v.name===vehicle);
   const items = (v&&v.type==='バッテリー') ? BATTERY_ITEMS : ENGINE_ITEMS;
   const existing = getData();
-  const dupIdx = existing.findIndex(r => r.date.slice(0,7)===date.slice(0,7)&&r.vehicle===vehicle);
+  const dupIdx = existing.findIndex(r => r.date.slice(0,7)===date.slice(0,7) && r.vehicle===vehicle);
   if (dupIdx>=0) {
     if (!confirm(`${vehicle} の ${date.slice(0,7)} の記録が既にあります。上書きしますか？`)) return;
     existing.splice(dupIdx,1);
   }
-  let ngCount=0;
+
+  let ngCount = 0;
   const results = items.map(item => {
-    const val = resultMap[item.no]||'';
+    const val    = resultMap[item.no]||'';
     const remark = document.getElementById('rem_'+item.no)?.value||'';
     if (val==='不良') ngCount++;
     return { no:item.no, place:item.place, content:item.content, val, remark };
   });
-  existing.push({ id:Date.now(), date, vehicle, vehicleType:v?v.type:'', inspector:name,
-    hour:document.getElementById('inspHour').value, km:document.getElementById('inspKm').value,
-    maker:document.getElementById('inspMaker').value, model:document.getElementById('inspModel').value,
-    serial:document.getElementById('inspSerial').value, mgmtNo:document.getElementById('inspMgmtNo').value,
-    remarks:document.getElementById('inspRemarks').value, results, repairs:getRepairRows(), ngCount,
-    savedAt:new Date().toISOString() });
+
+  const record = {
+    id: Date.now(), date, vehicle, vehicleType: v?v.type:'', inspector: name,
+    hour: document.getElementById('inspHour').value,
+    km:   document.getElementById('inspKm').value,
+    maker:   document.getElementById('inspMaker').value,
+    model:   document.getElementById('inspModel').value,
+    serial:  document.getElementById('inspSerial').value,
+    mgmtNo:  document.getElementById('inspMgmtNo').value,
+    remarks: document.getElementById('inspRemarks').value,
+    results, repairs: getRepairRows(), ngCount,
+    savedAt: new Date().toISOString(),
+    synced: false
+  };
+
+  existing.push(record);
   saveData(existing);
-  alert(`保存しました！\n${date} / ${vehicle}\n不良項目: ${ngCount}件`);
   updateStorageInfo();
+
+  const btn = document.getElementById('floatSave');
+  btn.disabled = true;
+  btn.textContent = '⏳ 送信中...';
+
+  const gasUrl = getGasUrl();
+  if (gasUrl) {
+    const ok = await syncRecord(record);
+    if (ok) {
+      const all = getData();
+      const idx = all.findIndex(r => r.id===record.id);
+      if (idx>=0) { all[idx].synced=true; saveData(all); }
+      alert(`✅ 保存＆スプレッドシート送信完了！\n${date} / ${vehicle}\n不良項目: ${ngCount}件`);
+    } else {
+      alert(`💾 ローカル保存しました（スプレッドシート送信失敗）\n${date} / ${vehicle}\n履歴タブから再送できます。`);
+    }
+  } else {
+    alert(`💾 保存しました！\n${date} / ${vehicle}\n不良項目: ${ngCount}件\n\n※スプレッドシート連携は「設定」タブで行えます。`);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '💾 保存する';
 }
 
-function clearForm() {
-  if (!confirm('入力内容をリセットしますか？')) return;
-  ['inspName','inspHour','inspKm','inspMgmtNo','inspRemarks'].forEach(id => document.getElementById(id).value='');
-  document.querySelectorAll('#inspBody .remark-input').forEach(r => r.value='');
-  document.querySelectorAll('#inspBody tr').forEach(r => r.classList.remove('row-ng'));
-  document.querySelectorAll('.result-btn').forEach(b => b.classList.remove('selected'));
-  Object.keys(resultMap).forEach(k => delete resultMap[k]);
-  buildRepairTable();
+// ===== GAS送信 =====
+async function syncRecord(record) {
+  const gasUrl = getGasUrl();
+  if (!gasUrl) return false;
+  try {
+    const payload = buildPayload(record);
+    const res = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    return json.status === 'ok';
+  } catch(e) {
+    console.error('GAS sync error:', e);
+    return false;
+  }
 }
 
+function buildPayload(r) {
+  const row = {
+    保存日時: r.savedAt,
+    検査年月日: r.date,
+    車両番号: r.vehicle,
+    動力種別: r.vehicleType||'',
+    検査者氏名: r.inspector,
+    稼働時間h: r.hour||'',
+    走行距離km: r.km||'',
+    メーカー名: r.maker||'',
+    型式: r.model||'',
+    製造番号: r.serial||'',
+    管理No: r.mgmtNo||'',
+    不良件数: r.ngCount,
+    特記事項: r.remarks||''
+  };
+  r.results.forEach(res => {
+    row[`No${res.no}_${res.place}_結果`] = res.val||'―';
+    row[`No${res.no}_${res.place}_補修`] = res.remark||'';
+  });
+  if (r.repairs && r.repairs.length) {
+    row['補修措置'] = r.repairs.map(rp => `[${rp.no}]${rp.desc} ${rp.date} ${rp.content}`).join(' / ');
+  }
+  return row;
+}
+
+async function retrySyncAll() {
+  const gasUrl = getGasUrl();
+  if (!gasUrl) { alert('設定タブでGAS URLを登録してください。'); return; }
+  const all = getData();
+  const unsynced = all.filter(r => !r.synced);
+  if (!unsynced.length) { alert('未送信のデータはありません。'); return; }
+  let ok=0, fail=0;
+  for (const r of unsynced) {
+    const success = await syncRecord(r);
+    if (success) { r.synced=true; ok++; } else { fail++; }
+  }
+  saveData(all);
+  alert(`再送完了：成功 ${ok}件 / 失敗 ${fail}件`);
+  renderSettings();
+}
+
+// ===== 履歴 =====
 function renderHistory() {
   const data=getData(), fv=document.getElementById('filterVehicle').value,
     ff=document.getElementById('filterFrom').value, ft=document.getElementById('filterTo').value;
@@ -503,11 +661,12 @@ function renderHistory() {
   const cont=document.getElementById('historyList');
   if (!filtered.length) { cont.innerHTML='<div class="empty">検査記録がありません</div>'; return; }
   cont.innerHTML=filtered.map(r => {
-    const badge=r.ngCount>0?`<span class="badge badge-ng">不良 ${r.ngCount}件</span>`:`<span class="badge badge-ok">異常なし</span>`;
+    const ngBadge = r.ngCount>0 ? `<span class="badge badge-ng">不良 ${r.ngCount}件</span>` : `<span class="badge badge-ok">異常なし</span>`;
+    const syncBadge = r.synced ? `<span class="badge badge-synced">📤送信済</span>` : `<span class="badge badge-unsynced">⏳未送信</span>`;
     return `<div class="hist-item" onclick="showDetail(${r.id})">
       <div class="hist-meta"><span class="hist-date">${r.date}</span><span class="hist-vehicle">${r.vehicle}</span>
-      <span class="tag">${r.vehicleType||''}式</span><span class="hist-insp">検査者: ${r.inspector}</span>${badge}
-      ${r.hour?`<span class="tag">${r.hour}h</span>`:''}</div></div>`;
+      <span class="tag">${r.vehicleType||''}式</span><span class="hist-insp">検査者: ${r.inspector}</span>
+      ${ngBadge}${syncBadge}${r.hour?`<span class="tag">${r.hour}h</span>`:''}</div></div>`;
   }).join('');
 }
 
@@ -525,17 +684,30 @@ function showDetail(id) {
       <table class="rtbl"><thead><tr><th style="width:55px">照合No.</th><th>不具合状況</th><th style="width:90px">補修年月日</th><th>補修実施内容</th></tr></thead>
       <tbody>${rec.repairs.map(r=>`<tr><td>${r.no}</td><td>${r.desc}</td><td>${r.date}</td><td>${r.content}</td></tr>`).join('')}</tbody></table></div>`;
   }
+  const syncBadge = rec.synced ? '📤 スプレッドシート送信済' : '⏳ 未送信';
   document.getElementById('modalContent').innerHTML=`
     <div class="card" style="margin:0 0 10px"><div class="form-row" style="flex-wrap:wrap;gap:14px">
       <div><b>検査年月日</b><br>${rec.date}</div><div><b>車両</b><br>${rec.vehicle}（${rec.vehicleType||''}式）</div>
       <div><b>検査者</b><br>${rec.inspector}</div>${rec.maker?`<div><b>メーカー</b><br>${rec.maker}</div>`:''}
       ${rec.model?`<div><b>型式</b><br>${rec.model}</div>`:''}${rec.hour?`<div><b>稼働時間</b><br>${rec.hour}h</div>`:''}
       <div><b>不良件数</b><br><span style="color:${rec.ngCount>0?'#c53030':'#276749'};font-weight:bold">${rec.ngCount}件</span></div>
+      <div><b>同期状態</b><br>${syncBadge}</div>
     </div></div>
     <div class="tbl-wrap"><table class="itbl"><thead><tr><th style="width:28px">No.</th><th>検査箇所</th><th>検査内容</th><th style="width:50px">結果</th><th>補修内容</th></tr></thead>
     <tbody>${rows}</tbody></table></div>${repairHtml}
     ${rec.remarks?`<div class="card" style="margin:10px 0 0"><b>事業者への要請等</b><br>${rec.remarks}</div>`:''}`;
-  document.getElementById('modalDeleteBtn').onclick=()=>deleteRecord(id);
+  document.getElementById('modalDeleteBtn').onclick  = () => deleteRecord(id);
+  document.getElementById('modalResyncBtn').onclick  = async () => {
+    const btn = document.getElementById('modalResyncBtn');
+    btn.disabled=true; btn.textContent='送信中...';
+    const ok = await syncRecord(rec);
+    if (ok) {
+      const all=getData(), idx=all.findIndex(r=>r.id===id);
+      if (idx>=0){all[idx].synced=true;saveData(all);}
+      btn.textContent='✅ 送信完了';
+    } else { btn.textContent='❌ 送信失敗'; }
+    setTimeout(()=>{btn.disabled=false;btn.textContent='🔄 スプレッドシートに送信';},2000);
+  };
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -545,24 +717,25 @@ function deleteRecord(id) {
   saveData(getData().filter(r=>r.id!==id)); closeModal(); renderHistory(); updateStorageInfo();
 }
 
+// ===== 車両管理 =====
 function addVehicle() {
   const name=document.getElementById('vName').value.trim();
   if (!name) { alert('車両番号・名称を入力してください'); return; }
   const vehicles=getVehicles();
   if (vehicles.length>=5) { alert('最大5台まで登録できます'); return; }
   if (vehicles.some(v=>v.name===name)) { alert('同じ名称の車両が既に登録されています'); return; }
-  vehicles.push({ name, type:document.getElementById('vType').value, maker:document.getElementById('vMaker').value,
-    model:document.getElementById('vModel').value, serial:document.getElementById('vSerial').value });
+  vehicles.push({ name, type:document.getElementById('vType').value,
+    maker:document.getElementById('vMaker').value,
+    model:document.getElementById('vModel').value,
+    serial:document.getElementById('vSerial').value });
   saveVehicles(vehicles);
   ['vName','vMaker','vModel','vSerial'].forEach(id=>document.getElementById(id).value='');
   renderVehicles(); populateVehicleSelects();
 }
-
 function deleteVehicle(name) {
   if (!confirm(`「${name}」を削除しますか？`)) return;
   saveVehicles(getVehicles().filter(v=>v.name!==name)); renderVehicles(); populateVehicleSelects();
 }
-
 function renderVehicles() {
   const vs=getVehicles(), cont=document.getElementById('vehicleList');
   if (!vs.length) { cont.innerHTML='<div class="empty">車両が登録されていません</div>'; return; }
@@ -573,7 +746,6 @@ function renderVehicles() {
     <div class="vinfo">${v.type}式 ／ ${v.maker||'―'} ／ ${v.model||'型式未入力'}</div>
     ${v.serial?`<div class="vinfo">製造番号: ${v.serial}</div>`:''}</div>`).join('');
 }
-
 function populateVehicleSelects() {
   const vs=getVehicles();
   ['inspVehicle','filterVehicle'].forEach(id => {
@@ -585,6 +757,7 @@ function populateVehicleSelects() {
   });
 }
 
+// ===== 統計 =====
 function renderStats() {
   const data=getData(), now=new Date(), thisYear=now.getFullYear(), thisMonth=now.toISOString().slice(0,7);
   const total=data.length, ngTotal=data.filter(r=>r.ngCount>0).length;
@@ -628,20 +801,87 @@ function renderStats() {
     </div>`).join('');
 }
 
+// ===== 設定 =====
+function renderSettings() {
+  const url=getGasUrl();
+  document.getElementById('gasUrl').value=url;
+  const all=getData();
+  const synced=all.filter(r=>r.synced).length, unsynced=all.filter(r=>!r.synced).length;
+  document.getElementById('syncSummary').innerHTML=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
+      <span>📤 送信済: <b style="color:#276749">${synced}件</b></span>
+      <span>⏳ 未送信: <b style="color:${unsynced>0?'#c53030':'#718096'}">${unsynced}件</b></span>
+      <span>🗄 合計: <b>${all.length}件</b></span>
+    </div>`;
+}
+
+function saveGasUrl() {
+  const url=document.getElementById('gasUrl').value.trim();
+  if (url && !url.startsWith('https://script.google.com')) {
+    alert('URLが正しくありません。\nhttps://script.google.com/macros/s/... から始まるURLを入力してください。');
+    return;
+  }
+  localStorage.setItem(GAS_URL_KEY, url);
+  alert(url ? 'URLを保存しました。' : 'URLをクリアしました。');
+}
+
+async function testGasConnection() {
+  const url=document.getElementById('gasUrl').value.trim();
+  if (!url) { alert('URLを入力してください。'); return; }
+  const el=document.getElementById('gasTestResult');
+  el.innerHTML='<div class="sync-status sync-ing">🔌 接続テスト中...</div>';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _test: true })
+    });
+    const json = await res.json();
+    if (json.status==='ok') {
+      el.innerHTML='<div class="sync-status sync-ok">✅ 接続成功！スプレッドシートと連携できています。</div>';
+    } else {
+      el.innerHTML=`<div class="sync-status sync-ng">❌ GASからエラーが返ってきました: ${JSON.stringify(json)}</div>`;
+    }
+  } catch(e) {
+    el.innerHTML=`<div class="sync-status sync-ng">❌ 接続失敗: ${e.message}<br>URLを確認するか、GASのデプロイ設定（アクセス権：全員）を確認してください。</div>`;
+  }
+}
+
+function resetAllData() {
+  if (!confirm('すべての検査記録を削除します。この操作は取り消せません。\n本当に削除しますか？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  alert('削除しました。');
+  updateStorageInfo();
+  renderSettings();
+}
+
+// ===== CSV =====
 function exportCSV() {
   const data=getData(); if (!data.length) { alert('エクスポートするデータがありません'); return; }
-  const headers=['検査年月日','車両','種別','検査者','稼働時間h','走行距離km','不良件数','保存日時'];
-  const rows=data.map(r=>[r.date,r.vehicle,r.vehicleType||'',r.inspector,r.hour||'',r.km||'',r.ngCount,r.savedAt]);
+  const headers=['検査年月日','車両','種別','検査者','稼働時間h','走行距離km','不良件数','送信済','保存日時'];
+  const rows=data.map(r=>[r.date,r.vehicle,r.vehicleType||'',r.inspector,r.hour||'',r.km||'',r.ngCount,r.synced?'済':'未',r.savedAt]);
   const csv=[headers,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob), a=document.createElement('a');
   a.href=url; a.download=`forklift_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
 }
 
+// ===== リセット =====
+function clearForm() {
+  if (!confirm('入力内容をリセットしますか？')) return;
+  ['inspName','inspHour','inspKm','inspMgmtNo','inspRemarks'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('#inspBody .remark-input').forEach(r=>r.value='');
+  document.querySelectorAll('#inspBody tr').forEach(r=>r.classList.remove('row-ng'));
+  document.querySelectorAll('.result-btn').forEach(b=>b.classList.remove('selected'));
+  Object.keys(resultMap).forEach(k=>delete resultMap[k]);
+  buildRepairTable();
+}
+
 function updateStorageInfo() {
   document.getElementById('storageInfo').textContent=`${getData().length}件保存 ／ 3年保存`;
 }
 
+// ===== 初期化 =====
 (function init() {
   const now=new Date();
   document.getElementById('inspDate').value=now.toISOString().slice(0,10);
