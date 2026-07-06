@@ -346,7 +346,8 @@ function saveData(d) {
 }
 function getVehicles() { try { return JSON.parse(localStorage.getItem(VEHICLE_KEY)||'[]'); } catch { return []; } }
 function saveVehicles(v) { localStorage.setItem(VEHICLE_KEY, JSON.stringify(v)); }
-function getGasUrl() { return localStorage.getItem(GAS_URL_KEY)||''; }
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxrARerUcMZtGfKat1QTaae9c5xkMdo8kB4y77k8MrYSqdtYfNJqu8eFY3ZAEpV9GgM/exec';
+function getGasUrl() { return localStorage.getItem(GAS_URL_KEY) || DEFAULT_GAS_URL; }
 
 function showTab(name) {
   ['inspect','history','vehicles','stats','settings'].forEach(t => {
