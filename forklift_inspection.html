@@ -30,7 +30,7 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
 .itbl { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
 .itbl th { background: #2c5282; color: white; padding: 8px; text-align: center; border: 1px solid #1a365d; font-size: 12px; white-space: nowrap; }
 .itbl td { border: 1px solid #cbd5e0; padding: 6px 8px; vertical-align: middle; }
-.ku-cell { background: #ebf8ff; color: #2c5282; font-weight: bold; writing-mode: vertical-rl; text-align: center; white-space: nowrap; font-size: 11px; width: 36px; }
+.ku-cell { background: #ebf8ff; color: #2c5282; font-weight: bold; writing-mode: vertical-rl; text-orientation: upright; text-align: center; white-space: nowrap; font-size: 11px; width: 36px; }
 .no-cell { text-align: center; color: #718096; width: 30px; font-size: 13px; }
 .method-cell { color: #718096; font-size: 11px; min-width: 110px; }
 .remark-input { width: 100%; border: none; background: transparent; font-size: 14px; font-family: inherit; padding: 4px 2px; min-height: 36px; }
@@ -414,7 +414,7 @@ function buildTable(items) {
     g.rows.forEach((item, i) => {
       const tr = document.createElement('tr');
       tr.id = `row_${item.no}`;
-      const kuTd = i===0 ? `<td class="ku-cell" rowspan="${g.rows.length}">${item.ku}</td>` : '';
+      const kuTd = i===0 ? `<td class="ku-cell" rowspan="${g.rows.length}">${item.ku.replace(/\n/g,'')}</td>` : '';
       tr.innerHTML = `${kuTd}
         <td class="no-cell">${item.no}</td>
         <td style="font-size:13px;min-width:110px">${item.place}</td>
