@@ -214,6 +214,22 @@ header span { font-size: 11px; opacity: 0.75; white-space: nowrap; margin-left: 
     <div class="card-title">登録車両一覧</div>
     <div class="vlist" id="vehicleList"></div>
   </div>
+  <div class="card">
+    <div class="card-title">🔄 車両データ バックアップ／復元</div>
+    <p style="font-size:13px;color:#718096;margin-bottom:12px">ホーム画面に追加した際にデータが消えた場合、バックアップコードから復元できます。</p>
+    <div class="btn-group" style="margin-bottom:12px">
+      <button class="btn btn-outline" onclick="exportVehicles()">📋 バックアップコードをコピー</button>
+      <button class="btn btn-outline" onclick="showImportArea()">📥 コードから復元</button>
+    </div>
+    <div id="importArea" style="display:none;margin-top:10px">
+      <div class="fg">
+        <label>バックアップコードを貼り付け</label>
+        <textarea id="importCode" style="width:100%;min-height:80px;resize:vertical;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-family:monospace;font-size:13px" placeholder="ここにバックアップコードを貼り付けてください"></textarea>
+      </div>
+      <br>
+      <button class="btn btn-primary" onclick="importVehicles()">復元する</button>
+    </div>
+  </div>
 </div>
 
 <div id="tab-stats" class="container" style="display:none">
@@ -757,6 +773,43 @@ function clearForm() {
   Object.keys(resultMap).forEach(k=>delete resultMap[k]);
   buildRepairTable();
 }
+function exportVehicles() {
+  const vs = getVehicles();
+  if (!vs.length) { alert('登録されている車両がありません。'); return; }
+  const code = btoa(encodeURIComponent(JSON.stringify(vs)));
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(() => {
+      alert('✅ バックアップコードをコピーしました。\nメモ帳などに貼り付けて保存してください。');
+    }).catch(() => promptCopy(code));
+  } else {
+    promptCopy(code);
+  }
+}
+function promptCopy(code) {
+  prompt('以下のコードをすべてコピーしてメモ帳に保存してください：', code);
+}
+function showImportArea() {
+  const area = document.getElementById('importArea');
+  area.style.display = area.style.display === 'none' ? '' : 'none';
+}
+function importVehicles() {
+  const code = document.getElementById('importCode').value.trim();
+  if (!code) { alert('バックアップコードを貼り付けてください。'); return; }
+  try {
+    const vs = JSON.parse(decodeURIComponent(atob(code)));
+    if (!Array.isArray(vs)) throw new Error();
+    if (!confirm(`${vs.length}台の車両データを復元しますか？\n現在の車両データは上書きされます。`)) return;
+    saveVehicles(vs);
+    renderVehicles();
+    populateVehicleSelects();
+    document.getElementById('importArea').style.display = 'none';
+    document.getElementById('importCode').value = '';
+    alert('✅ 車両データを復元しました。');
+  } catch(e) {
+    alert('❌ コードが正しくありません。バックアップコードをそのまま貼り付けてください。');
+  }
+}
+
 function updateStorageInfo() {
   document.getElementById('storageInfo').textContent=`${getData().length}件保存 ／ 3年保存`;
 }
